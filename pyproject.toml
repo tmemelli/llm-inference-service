@@ -1,0 +1,42 @@
+[project]
+name = "llm-inference-service"
+version = "0.1.0"
+description = "Resilient multi-provider LLM inference API built with FastAPI."
+readme = "README.md"
+authors = [
+    { name = "Thiago Memelli", email = "tmemelli@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.141.1",
+    "google-genai>=2.22.0",
+    "groq>=1.7.0",
+    "pydantic>=2.13.5",
+    "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.3",
+    "uvicorn[standard]>=0.52.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "anyio>=4.15.1",
+    "debugpy>=1.8.21",
+    "httpx>=0.28.1",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.6",
+]
+
+[tool.mypy]
+plugins = [
+    "pydantic.mypy"
+]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
