@@ -11,6 +11,7 @@ from dataclasses import replace
 from llm_inference_service.core.provider_policy import ProviderPolicy
 from llm_inference_service.domain.exceptions import (
     ProviderConnectionError,
+    ProviderError,
     ProviderRateLimitError,
     ProviderTimeoutError,
     ProviderUnavailableError,
@@ -99,7 +100,7 @@ class InferenceService:
         try:
             return await self._execute_provider_flow(request)
 
-        except _RETRYABLE_PROVIDER_ERRORS:
+        except ProviderError:
             policy = self._get_policy_for_provider(request.provider)
 
             if not policy.provider_fallbacks:

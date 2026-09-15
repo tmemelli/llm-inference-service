@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LLM Inference Service</title>
+
+    <meta name="theme-color" content="#0f1220">
+
+    <link
+        rel="icon"
+        href="assets/favicon.png"
+        sizes="192x192"
+        type="image/png"
+    >
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+    <main>
+        <section>
+            <h1>LLM Inference Service</h1>
+
+            <p>
+                Run inference requests through a resilient multi-provider LLM API.
+            </p>
+
+            <form id="inference-form" autocomplete="off">
+                <div>
+                    <label for="provider">Provider</label>
+
+                    <select id="provider" name="provider" required>
+                        <option value="">Select a provider</option>
+                        <option value="groq">Groq</option>
+                        <option value="gemini">Gemini</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="model">Model</label>
+
+                    <select id="model" name="model" required disabled>
+                        <option value="">Select a provider first</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="system-prompt">System prompt</label>
+
+                    <textarea
+                        id="system-prompt"
+                        name="system_prompt"
+                        rows="4"
+                        maxlength="2000"
+                        spellcheck="false"
+                        placeholder="Optional instructions for the model"
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label for="prompt">Prompt</label>
+
+                    <textarea
+                        id="prompt"
+                        name="prompt"
+                        rows="8"
+                        maxlength="2000"
+                        spellcheck="false"
+                        placeholder="Enter your prompt"
+                        required
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label for="temperature">Temperature</label>
+
+                    <input
+                        id="temperature"
+                        name="temperature"
+                        type="text"
+                        inputmode="decimal"
+                        pattern="(?:0(?:\.[0-9])?|1(?:\.[0-9])?|2(?:\.0)?|\.[0-9])"
+                        value="0.7"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="max-tokens">Max tokens</label>
+
+                    <input
+                        id="max-tokens"
+                        name="max_tokens"
+                        type="text"
+                        inputmode="numeric"
+                        pattern="(?:[1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)"
+                        value="500"
+                        required
+                    >
+                </div>
+
+                <div id="form-error" role="alert" hidden></div>
+
+                <button id="submit-button" type="submit">
+                    <span id="button-text">Run inference</span>
+                    <span id="loading-icon" hidden>⏳</span>
+                </button>
+            </form>
+        </section>
+
+        <section id="result-section" hidden>
+            <h2>Response</h2>
+
+            <pre id="response-content"></pre>
+
+            <dl>
+                <dt>Requested Provider</dt>
+                <dd id="response-requested-provider">-</dd>
+
+                <dt>Requested Model</dt>
+                <dd id="response-requested-model">-</dd>
+
+                <dt>Executed Provider</dt>
+                <dd id="response-provider">-</dd>
+
+                <dt>Executed Model</dt>
+                <dd id="response-model">-</dd>
+
+                <dt>Prompt tokens</dt>
+                <dd id="response-prompt-tokens">-</dd>
+
+                <dt>Completion tokens</dt>
+                <dd id="response-completion-tokens">-</dd>
+
+                <dt>Latency</dt>
+                <dd id="response-latency">-</dd>
+
+                <dt>Request ID</dt>
+                <dd id="response-request-id">-</dd>
+            </dl>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
