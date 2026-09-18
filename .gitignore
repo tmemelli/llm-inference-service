@@ -91,4 +91,6 @@ wheels/
 # =============================================================================
 
 .directory
-.DS_Storefrontend.zip
+.DS_Store
+
+frontend.zip

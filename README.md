@@ -2,7 +2,18 @@
 
 # ⚡ LLM Inference Service
 
-### Resilient Multi-Provider LLM Inference API with Async Python, Fallback Routing, Concurrency Control, and Production Deployment
+### Resilient Multi-Provider LLM Inference API with Async Python, Concurrent Batch Execution, Fallback Routing, and Production Deployment
+
+
+<div align="center">
+
+🌍 **Language / Idioma**
+
+🇺🇸 **English** | [🇧🇷 Português](./README.pt-BR.md)
+
+</div>
+
+---
 
 <br>
 
@@ -10,14 +21,14 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-Async_API-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq-LLM_Provider-F55036?style=for-the-badge)
 ![Gemini](https://img.shields.io/badge/Gemini-Google_GenAI-4285F4?style=for-the-badge&logo=google&logoColor=white)
-![Pytest](https://img.shields.io/badge/Pytest-44_Tests-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
+![Pytest](https://img.shields.io/badge/Pytest-62_Tests-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
 ![mypy](https://img.shields.io/badge/mypy-Type_Checked-2A6DB2?style=for-the-badge&logo=python&logoColor=white)
 ![Ruff](https://img.shields.io/badge/Ruff-Linting-D7FF64?style=for-the-badge&logo=ruff&logoColor=black)
 ![Status](https://img.shields.io/badge/Status-Live-2EA44F?style=for-the-badge)
 
 <br>
 
-**A production-oriented LLM inference service that exposes one stable API across multiple AI providers while centralizing resilience, concurrency, validation, rate limiting, and provider-specific error handling.**
+**A production-oriented LLM inference service that exposes stable single and batch APIs across multiple AI providers while centralizing resilience, concurrent orchestration, validation, rate limiting, and provider-specific error handling.**
 
 ### 🌐 Live
 
@@ -63,13 +74,13 @@ If those concerns are scattered across endpoint handlers or provider SDK calls, 
 
 **LLM Inference Service** centralizes that behavior behind one asynchronous HTTP API.
 
-The API accepts a provider, model, prompt, and inference parameters. From that point forward, the service owns the execution policy: concurrency limits, timeout enforcement, retries, model fallback, provider fallback, error normalization, and response metadata.
+The API accepts either one inference request or a bounded batch of independent requests. From that point forward, the service owns the execution policy: concurrent orchestration, provider concurrency limits, timeout enforcement, retries, model fallback, provider fallback, error normalization, and response metadata.
 
 ---
 
 ## 🚀 What it does
 
-A client sends one inference request:
+Clients can execute either a single inference request or a bounded batch of independent requests through the same provider-agnostic backend.
 
 ```text
 POST /v1/inference
@@ -107,46 +118,81 @@ POST /v1/inference
      │            │
      ▼            ▼
  Groq API     Google GenAI
-     │            │
-     └─────┬──────┘
-           ▼
-┌──────────────────────┐
-│ Normalized Response  │
-│ • provider           │
-│ • model              │
-│ • tokens             │
-│ • latency            │
-│ • request_id         │
-└──────────────────────┘
 ```
 
-The caller does not need provider-specific orchestration logic. Provider SDK details stay behind adapters that implement the same asynchronous domain contract.
+Batch execution reuses the same inference pipeline instead of introducing a second provider path:
+
+```text
+POST /v1/inference/batch
+        │
+        ▼
+┌────────────────────────┐
+│ BatchInferenceService  │
+│ • configurable limit   │
+│ • aggregate metrics    │
+└───────────┬────────────┘
+            │
+            ▼
+      asyncio.gather
+            │
+      ┌─────┼─────┐
+      ▼     ▼     ▼
+    item 1 item 2 item N
+      │     │     │
+      └─────┼─────┘
+            ▼
+    InferenceService
+       per item
+            │
+            ▼
+ retries / fallbacks /
+ semaphores / timeouts
+            │
+            ▼
+┌────────────────────────┐
+│ BatchInferenceResult   │
+│ • total                │
+│ • success_count        │
+│ • failure_count        │
+│ • elapsed_ms           │
+└────────────────────────┘
+```
+
+`asyncio.gather()` coordinates batch items concurrently while the existing per-provider semaphores still control the number of active upstream calls. Each item therefore keeps the same retry, fallback, timeout, tracing, and provider-error behavior as a normal single inference.
+
+Provider SDK details remain behind adapters that implement the same asynchronous domain contract.
 
 ---
 
 ## 🖼️ Live Demo
 
-The project includes a public frontend connected to the deployed FastAPI service.
+The project includes a public frontend connected to the deployed FastAPI service, with separate interfaces for single and batch inference.
 
 <div align="center">
 
-| Public Application | Successful Inference |
+| Single Inference | Batch Inference |
 |:---:|:---:|
-| ![LLM Inference Service](assets/app-home.png) | ![Successful inference](assets/inference-success.png) |
-| *Public interface at `app.thiagomemelli.com.br`* | *Inference response with provider, model, token usage, latency, and request ID* |
+| ![Single inference interface](assets/single-inference-home.png) | ![Batch inference interface](assets/batch-inference-home.png) |
+| *Single-request interface at `app.thiagomemelli.com.br`* | *Batch interface for up to 5 independent requests* |
 
-| Real Provider Fallback | Swagger / OpenAPI |
+| Single Result | Batch Result |
 |:---:|:---:|
-| ![Provider fallback](assets/provider-fallback.png) | ![FastAPI Swagger](assets/swagger-api.png) |
-| *Gemini requested; Groq executed after provider fallback* | *Public API documentation at `api.thiagomemelli.com.br/docs`* |
+| ![Single inference result](assets/single-success.png) | ![Batch inference result](assets/batch-success.png) |
+| *Normalized response with provider, model, token usage, latency, and request ID* | *Per-item results plus total, success, failure, and elapsed-time metrics* |
+
+### Swagger / OpenAPI
+
+<img src="assets/swagger-api.png" alt="FastAPI Swagger showing single and batch inference endpoints" width="900">
+
+*Public API documentation exposing both `POST /v1/inference` and `POST /v1/inference/batch`.*
 
 </div>
 
-### Fallback is visible to the user
+### Requested vs. executed provider/model
 
 The frontend keeps the originally requested provider/model and compares them with the provider/model returned by the API.
 
-That makes resilience behavior observable instead of hidden:
+That makes model and provider fallback observable instead of hidden:
 
 ```text
 Requested Provider: Gemini
@@ -156,7 +202,7 @@ Executed Provider:  Groq
 Executed Model:     openai/gpt-oss-20b
 ```
 
-The screenshot above was produced by the deployed application, demonstrating provider fallback through the real public interface.
+The same distinction is available in batch results for every successful item.
 
 ---
 
@@ -178,6 +224,21 @@ Provider-specific SDK code is isolated inside dedicated adapters.
 The API, provider adapters, rate limiter, and orchestration flow are asynchronous.
 
 The Groq integration uses `AsyncGroq`, while Gemini inference uses the asynchronous Google GenAI client.
+
+### 📦 Concurrent batch inference
+
+`POST /v1/inference/batch` accepts multiple independent inference requests and coordinates them through `BatchInferenceService`.
+
+The batch flow:
+
+- fans out requests with `asyncio.gather()`;
+- preserves input-to-output ordering;
+- reuses `InferenceService` for every item;
+- isolates `ProviderError` failures to the affected item instead of aborting the whole batch;
+- returns per-item success/error data plus aggregate batch metrics;
+- keeps existing provider semaphores in control of real upstream concurrency.
+
+The outer API schema accepts between 1 and 50 items, while the runtime limit is independently configurable through `BATCH_MAX_REQUESTS`. The public deployment currently uses a maximum of **5 requests per batch**.
 
 ### 🔁 Centralized retry policy
 
@@ -263,15 +324,24 @@ A slow or heavily used provider therefore does not need to share the same concur
 
 ### 🧯 Public API rate limiting
 
-`POST /v1/inference` is protected by an asynchronous in-memory rolling-window rate limiter.
+Both inference endpoints are protected by the same asynchronous in-memory rolling-window rate limiter:
+
+```text
+POST /v1/inference
+POST /v1/inference/batch
+```
 
 The default example configuration limits each client to:
 
 ```text
-5 inference requests / minute
+5 HTTP inference requests / minute
 ```
 
 Clients are identified by IP address. When the service runs behind a trusted reverse proxy, the first address from `X-Forwarded-For` is used as the original client address.
+
+Batch size is controlled separately through `BATCH_MAX_REQUESTS`.
+
+> **Architectural decision:** a batch counts as one HTTP request regardless of how many inference items it contains. This is intentional in the current version so batch orchestration remains independent from weighted quota logic. A future version could apply weighted rate limiting where each batch item contributes individually to the client quota.
 
 ### 🧩 Provider registry
 
@@ -316,6 +386,9 @@ Current request limits:
 | `system_prompt` | optional, 1–2000 characters |
 | `temperature` | `0.0`–`2.0` |
 | `max_tokens` | `1`–`500` |
+| batch `requests` | 1–50 at the API schema boundary |
+
+The configured runtime batch limit is validated separately through `BATCH_MAX_REQUESTS` and defaults to `5`.
 
 ### 🆔 Request tracing
 
@@ -325,7 +398,7 @@ That identifier is preserved across retries, model changes, and provider fallbac
 
 ### 📊 Inference metadata
 
-Successful responses expose:
+Successful single responses expose:
 
 - executed provider;
 - executed model;
@@ -334,6 +407,16 @@ Successful responses expose:
 - completion token count;
 - provider inference latency;
 - request ID.
+
+Batch responses additionally expose:
+
+- ordered per-item outcomes;
+- per-item success/failure state;
+- isolated error type and message for failed items;
+- total item count;
+- success count;
+- failure count;
+- total batch elapsed time.
 
 ---
 
@@ -383,6 +466,22 @@ Provider SDK
 Normalized ModelResponse
 ```
 
+Batch requests add one orchestration layer above the existing single-request flow:
+
+```text
+BatchInferenceService
+        ↓
+  asyncio.gather
+        ↓
+InferenceService × N
+        ↓
+per-item retry / fallback / timeout / semaphore
+        ↓
+ordered BatchItemResult values
+        ↓
+BatchInferenceResult
+```
+
 This separation keeps concurrency, timeout, retry, and fallback behavior in the orchestration layer rather than duplicating resilience code inside each SDK adapter.
 
 ---
@@ -394,8 +493,9 @@ llm-inference-service/
 │
 ├── assets/
 │   ├── app-home.png
-│   ├── inference-success.png
-│   ├── provider-fallback.png
+│   ├── batch-inference-home.png
+│   ├── batch-success.png
+│   ├── single-success.png
 │   └── swagger-api.png
 │
 ├── frontend/
@@ -430,12 +530,15 @@ llm-inference-service/
 │       │   └── groq_client.py
 │       │
 │       ├── services/
+│       │   ├── batch_inference_service.py
 │       │   ├── inference_service.py
 │       │   └── provider_registry.py
 │       │
 │       └── main.py
 │
 ├── tests/
+│   ├── test_batch_models.py
+│   ├── test_batch_route.py
 │   ├── test_dependencies.py
 │   ├── test_exception_handlers.py
 │   ├── test_model_fallback.py
@@ -461,10 +564,10 @@ llm-inference-service/
 |---|---|
 | `domain` | Stable request/response models, provider contract, supported-model catalog, domain exceptions |
 | `providers` | Groq and Gemini SDK adapters plus provider-specific error translation |
-| `services` | Inference orchestration, retry, fallback, timeout, semaphore use, provider resolution |
+| `services` | Single inference orchestration, concurrent batch coordination, retry, fallback, timeout, semaphore use, provider resolution |
 | `core` | Settings, provider policies, startup validation, lifespan dependency composition |
 | `api` | HTTP schemas, routes, dependencies, public rate limiting, exception-to-HTTP mapping |
-| `frontend` | Static public client used to exercise and demonstrate the deployed API |
+| `frontend` | Static public client for single and batch inference demonstrations |
 
 ---
 
@@ -503,6 +606,31 @@ class ModelResponse:
     latency_ms: float
     request_id: str
 ```
+
+### `BatchItemResult` and `BatchInferenceResult`
+
+Batch execution uses immutable domain models to keep each item internally consistent and to validate aggregate metrics:
+
+```python
+@dataclass(frozen=True)
+class BatchItemResult:
+    request_id: str
+    success: bool
+    response: ModelResponse | None
+    error_type: str | None
+    error_message: str | None
+
+
+@dataclass(frozen=True)
+class BatchInferenceResult:
+    results: tuple[BatchItemResult, ...]
+    total: int
+    success_count: int
+    failure_count: int
+    elapsed_ms: float
+```
+
+A successful item must contain a `ModelResponse` and no error fields. A failed item must contain error metadata and no model response.
 
 ### `ProviderClient`
 
@@ -559,6 +687,19 @@ The application orchestrator is responsible for:
 - executing provider fallback;
 - preserving the original request ID.
 
+### `BatchInferenceService`
+
+The batch orchestrator is intentionally thin and delegates each item to `InferenceService`.
+
+Its responsibilities are:
+
+- enforcing the configured runtime batch-size limit;
+- fanning out independent requests with `asyncio.gather()`;
+- preserving result ordering;
+- isolating provider failures per item;
+- calculating total/success/failure counts;
+- measuring total batch elapsed time.
+
 ### FastAPI lifespan composition
 
 Long-lived dependencies are created once at application startup:
@@ -574,6 +715,8 @@ Settings
    ├── InMemoryRateLimiter
    │
    └── InferenceService
+            │
+            ├──► BatchInferenceService
             │
             ▼
         app.state
@@ -593,7 +736,7 @@ Provider clients are closed during application shutdown.
 | Settings | pydantic-settings | Environment-based configuration |
 | Groq | `groq` / `AsyncGroq` | Asynchronous Groq model inference |
 | Gemini | `google-genai` | Asynchronous Gemini model inference |
-| Async runtime | `asyncio` | Timeouts, semaphores, sleeps, locks |
+| Async runtime | `asyncio` | Batch `gather`, timeouts, semaphores, sleeps, locks |
 | Provider contract | `typing.Protocol` | Provider-agnostic structural interface |
 | Domain DTOs | frozen dataclasses | Immutable internal request/response objects |
 | Testing | pytest + AnyIO | Async unit and orchestration tests |
@@ -673,6 +816,74 @@ curl -X POST \
 
 > The response reports the provider and model that actually executed the inference. This is important when model or provider fallback changes the execution path.
 
+### `POST /v1/inference/batch`
+
+Runs multiple independent inference requests through the same resilience pipeline and returns ordered per-item outcomes.
+
+#### Batch example
+
+```bash
+curl -X POST \
+  https://api.thiagomemelli.com.br/v1/inference/batch \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "requests": [
+      {
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "system_prompt": "You are a concise AI engineering assistant.",
+        "prompt": "Explain provider fallback in three bullet points.",
+        "temperature": 0.7,
+        "max_tokens": 300
+      },
+      {
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-lite",
+        "prompt": "Explain exponential backoff in simple terms.",
+        "temperature": 0.7,
+        "max_tokens": 300
+      }
+    ]
+  }'
+```
+
+#### Batch response shape
+
+```json
+{
+  "results": [
+    {
+      "request_id": "request-1",
+      "success": true,
+      "response": {
+        "request_id": "request-1",
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "content": "...",
+        "prompt_tokens": 42,
+        "completion_tokens": 120,
+        "latency_ms": 1080.25
+      },
+      "error_type": null,
+      "error_message": null
+    },
+    {
+      "request_id": "request-2",
+      "success": false,
+      "response": null,
+      "error_type": "ProviderRequestRejectedError",
+      "error_message": "The upstream provider rejected the request."
+    }
+  ],
+  "total": 2,
+  "success_count": 1,
+  "failure_count": 1,
+  "elapsed_ms": 1120.44
+}
+```
+
+Provider failures are isolated to their individual batch item. Other items can still complete successfully.
+
 ### HTTP error mapping
 
 Provider-domain failures are translated into stable HTTP responses:
@@ -680,6 +891,7 @@ Provider-domain failures are translated into stable HTTP responses:
 | Failure | HTTP Status |
 |---|---:|
 | Unknown provider | `400 Bad Request` |
+| Configured batch-size limit exceeded | `400 Bad Request` |
 | Public inference rate limit | `429 Too Many Requests` |
 | Provider access/auth failure | `502 Bad Gateway` |
 | Provider rejected request | `502 Bad Gateway` |
@@ -733,6 +945,7 @@ The example file also contains:
 
 - allowed CORS origins;
 - API inference rate limit;
+- batch-size limit (`BATCH_MAX_REQUESTS`);
 - provider-specific concurrency limits;
 - timeout settings;
 - retry/backoff/jitter configuration;
@@ -750,10 +963,11 @@ uv run uvicorn llm_inference_service.main:app --reload
 Local endpoints:
 
 ```text
-API:       http://127.0.0.1:8000
-Swagger:   http://127.0.0.1:8000/docs
-Health:    http://127.0.0.1:8000/health
-Inference: http://127.0.0.1:8000/v1/inference
+API:              http://127.0.0.1:8000
+Swagger:          http://127.0.0.1:8000/docs
+Health:           http://127.0.0.1:8000/health
+Single inference: http://127.0.0.1:8000/v1/inference
+Batch inference:  http://127.0.0.1:8000/v1/inference/batch
 ```
 
 ### 5. Optional: serve the frontend locally
@@ -769,7 +983,7 @@ Open:
 http://localhost:5500
 ```
 
-The current frontend API endpoint is defined in `frontend/app.js`. Change `API_URL` if you want the static frontend to call a local API instead of the deployed service.
+The frontend automatically uses `http://127.0.0.1:8000` when served from `localhost`/`127.0.0.1`, and `https://api.thiagomemelli.com.br` in production.
 
 ---
 
@@ -777,7 +991,13 @@ The current frontend API endpoint is defined in `frontend/app.js`. Change `API_U
 
 Provider resilience is data-driven rather than hard-coded into the service.
 
-The example `.env.example` includes policies equivalent to:
+Batch execution has its own independent runtime limit:
+
+```env
+BATCH_MAX_REQUESTS=5
+```
+
+The example `.env.example` also includes provider policies equivalent to:
 
 ```text
 Groq
@@ -824,7 +1044,7 @@ This catches routing errors before the API begins accepting traffic.
 
 ## 🧪 Testing & Quality
 
-The project contains **44 automated test cases** covering the orchestration and API behavior that matters most for a resilient inference service.
+The project contains **62 automated test cases** covering single-request resilience, concurrent batch orchestration, API behavior, configuration, and domain invariants.
 
 Run the suite:
 
@@ -851,7 +1071,13 @@ uv run pytest -v
 - per-provider semaphore concurrency limiting;
 - per-client rate limiting;
 - forwarded/client IP resolution;
-- exception-to-HTTP response mapping.
+- exception-to-HTTP response mapping;
+- concurrent execution of multiple batch items;
+- per-item provider failure isolation;
+- configured batch-size enforcement;
+- batch domain invariant validation;
+- batch endpoint success and validation behavior;
+- API rejection of batches above the schema-level maximum.
 
 ### Static type checking
 
@@ -970,6 +1196,36 @@ Examples such as a Gemini model configured under Groq, a provider falling back t
 
 Fail-fast startup validation makes those mistakes explicit.
 
+### Why a dedicated `BatchInferenceService`?
+
+Batch orchestration is a different responsibility from provider inference.
+
+`BatchInferenceService` coordinates multiple independent requests, but it does not duplicate retry, fallback, timeout, semaphore, or provider-selection logic. Every item is delegated back to the existing `InferenceService`.
+
+This keeps the batch layer focused on fan-out/fan-in orchestration and aggregation while preserving one source of truth for inference behavior.
+
+### Why use `asyncio.gather()` for batch orchestration?
+
+The batch items are independent, so they can be scheduled concurrently.
+
+`asyncio.gather()` provides a simple fan-out/fan-in model and preserves result ordering. Actual provider concurrency remains bounded by the existing provider-specific semaphores, so adding batch execution does not bypass upstream protection.
+
+### Why does one batch count as one rate-limited HTTP request?
+
+The current rate limiter operates at the HTTP request boundary.
+
+That means:
+
+```text
+POST /v1/inference       → 1 rate-limit unit
+POST /v1/inference/batch → 1 rate-limit unit
+```
+
+Batch size is constrained independently by `BATCH_MAX_REQUESTS`.
+
+This is deliberate in the current version: the batch feature demonstrates concurrent orchestration and failure isolation without coupling the batch layer to a weighted quota strategy. Weighted rate limiting is a natural future extension if each inference item should consume quota individually.
+
+
 ---
 
 ## 🔐 Security & Public API Considerations
@@ -987,6 +1243,7 @@ The public deployment intentionally keeps provider credentials on the backend.
 - allowed CORS headers are restricted to `Content-Type`;
 - public inference calls are rate-limited per client;
 - prompt and token limits constrain request size;
+- batch size is independently constrained through `BATCH_MAX_REQUESTS`;
 - provider errors are translated into controlled API messages rather than exposing raw SDK exceptions.
 
 ### Reverse proxy note
@@ -1012,6 +1269,7 @@ Internet
     └── FastAPI
         ├── GET  /health
         ├── POST /v1/inference
+        ├── POST /v1/inference/batch
         └── GET  /docs
               │
               ├── Groq
@@ -1023,9 +1281,11 @@ The browser calls only the public FastAPI endpoint:
 ```text
 Browser
    │
-   │ POST /v1/inference
-   ▼
-FastAPI service
+   ├── POST /v1/inference
+   └── POST /v1/inference/batch
+              │
+              ▼
+        FastAPI service
    │
    ├── server-side Groq API key
    └── server-side Gemini API key
@@ -1037,7 +1297,7 @@ Provider secrets never need to be delivered to the frontend.
 
 ## 📌 Current Scope
 
-This repository focuses on reliable synchronous-response LLM inference over an asynchronous HTTP execution path.
+This repository focuses on reliable single-response and bounded batch LLM inference over an asynchronous HTTP execution path.
 
 Current scope includes:
 
@@ -1047,6 +1307,10 @@ Current scope includes:
 - provider/model catalog validation;
 - provider-specific policies;
 - async execution;
+- concurrent batch orchestration with `asyncio.gather`;
+- per-item batch failure isolation;
+- configurable batch-size enforcement;
+- aggregate batch metrics;
 - timeouts;
 - retry with exponential backoff and jitter;
 - model fallback;
@@ -1105,9 +1369,24 @@ The in-memory rate limiter is intentionally simple and process-local. A horizont
 - [x] mypy configuration
 - [x] Ruff lint checks
 
+### v0.2 — Concurrent Batch Inference ✅
+
+- [x] `POST /v1/inference/batch`
+- [x] `BatchInferenceService`
+- [x] Concurrent fan-out/fan-in with `asyncio.gather()`
+- [x] Per-item provider failure isolation
+- [x] Input/output order preservation
+- [x] Aggregate total/success/failure/elapsed metrics
+- [x] Configurable `BATCH_MAX_REQUESTS`
+- [x] Batch-specific HTTP validation and error handling
+- [x] Single / Batch frontend tabs
+- [x] Per-item prompt and system-prompt visibility in batch results
+- [x] Batch domain and HTTP endpoint tests
+
 ### Possible next iterations
 
 - [ ] Redis-backed distributed rate limiting
+- [ ] Weighted rate limiting for batch items
 - [ ] OpenTelemetry / persistent metrics integration
 - [ ] Streaming inference responses
 - [ ] Circuit breaker per provider
@@ -1134,6 +1413,6 @@ AI Engineer | Python | LLM Systems | Backend Engineering
 
 <div align="center">
 
-**Built as a hands-on AI Engineering project focused on reliable LLM infrastructure, asynchronous Python, provider abstraction, resilience, and real-world deployment.**
+**Built as a hands-on AI Engineering project focused on reliable LLM infrastructure, asynchronous Python, concurrent orchestration, provider abstraction, resilience, and real-world deployment.**
 
 </div>
