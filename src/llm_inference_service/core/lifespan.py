@@ -16,6 +16,7 @@ from llm_inference_service.core.settings import get_settings
 from llm_inference_service.domain.protocols import ProviderClient
 from llm_inference_service.providers.gemini_client import GeminiClient
 from llm_inference_service.providers.groq_client import GroqClient
+from llm_inference_service.services.batch_inference_service import BatchInferenceService
 from llm_inference_service.services.inference_service import InferenceService
 from llm_inference_service.services.provider_registry import ProviderRegistry
 
@@ -74,7 +75,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         provider_policies=settings.provider_policies,
     )
 
+    batch_inference_service = BatchInferenceService(
+        inference_service=inference_service,
+        max_batch_size=settings.batch_max_requests,
+    )
+
     app.state.inference_service = inference_service
+    app.state.batch_inference_service = batch_inference_service
     app.state.rate_limiter = rate_limiter
 
     try:

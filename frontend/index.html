@@ -53,87 +53,154 @@
                 Run inference requests through a resilient multi-provider LLM API.
             </p>
 
-            <form id="inference-form" autocomplete="off">
-                <div>
-                    <label for="provider">Provider</label>
-
-                    <select id="provider" name="provider" required>
-                        <option value="">Select a provider</option>
-                        <option value="groq">Groq</option>
-                        <option value="gemini">Gemini</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="model">Model</label>
-
-                    <select id="model" name="model" required disabled>
-                        <option value="">Select a provider first</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="system-prompt">System prompt</label>
-
-                    <textarea
-                        id="system-prompt"
-                        name="system_prompt"
-                        rows="4"
-                        maxlength="2000"
-                        spellcheck="false"
-                        placeholder="Optional instructions for the model"
-                    ></textarea>
-                </div>
-
-                <div>
-                    <label for="prompt">Prompt</label>
-
-                    <textarea
-                        id="prompt"
-                        name="prompt"
-                        rows="8"
-                        maxlength="2000"
-                        spellcheck="false"
-                        placeholder="Enter your prompt"
-                        required
-                    ></textarea>
-                </div>
-
-                <div>
-                    <label for="temperature">Temperature</label>
-
-                    <input
-                        id="temperature"
-                        name="temperature"
-                        type="text"
-                        inputmode="decimal"
-                        pattern="(?:0(?:\.[0-9])?|1(?:\.[0-9])?|2(?:\.0)?|\.[0-9])"
-                        value="0.7"
-                        required
-                    >
-                </div>
-
-                <div>
-                    <label for="max-tokens">Max tokens</label>
-
-                    <input
-                        id="max-tokens"
-                        name="max_tokens"
-                        type="text"
-                        inputmode="numeric"
-                        pattern="(?:[1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)"
-                        value="500"
-                        required
-                    >
-                </div>
-
-                <div id="form-error" role="alert" hidden></div>
-
-                <button id="submit-button" type="submit">
-                    <span id="button-text">Run inference</span>
-                    <span id="loading-icon" hidden>⏳</span>
+            <div class="mode-tabs" role="tablist" aria-label="Inference mode">
+                <button
+                    id="single-tab"
+                    class="mode-tab active"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="single-panel"
+                >
+                    Single Inference
                 </button>
-            </form>
+
+                <button
+                    id="batch-tab"
+                    class="mode-tab"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="batch-panel"
+                >
+                    Batch Inference
+                </button>
+            </div>
+
+            <div id="single-panel" class="mode-panel" role="tabpanel" aria-labelledby="single-tab">
+                <form id="inference-form" autocomplete="off">
+                    <div>
+                        <label for="provider">Provider</label>
+
+                        <select id="provider" name="provider" required>
+                            <option value="">Select a provider</option>
+                            <option value="groq">Groq</option>
+                            <option value="gemini">Gemini</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="model">Model</label>
+
+                        <select id="model" name="model" required disabled>
+                            <option value="">Select a provider first</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="system-prompt">System prompt</label>
+
+                        <textarea
+                            id="system-prompt"
+                            name="system_prompt"
+                            rows="4"
+                            maxlength="2000"
+                            spellcheck="false"
+                            placeholder="Optional instructions for the model"
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <label for="prompt">Prompt</label>
+
+                        <textarea
+                            id="prompt"
+                            name="prompt"
+                            rows="8"
+                            maxlength="2000"
+                            spellcheck="false"
+                            placeholder="Enter your prompt"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <label for="temperature">Temperature</label>
+
+                        <input
+                            id="temperature"
+                            name="temperature"
+                            type="text"
+                            inputmode="decimal"
+                            pattern="(?:0(?:\.[0-9])?|1(?:\.[0-9])?|2(?:\.0)?|\.[0-9])"
+                            value="0.7"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="max-tokens">Max tokens</label>
+
+                        <input
+                            id="max-tokens"
+                            name="max_tokens"
+                            type="text"
+                            inputmode="numeric"
+                            pattern="(?:[1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)"
+                            value="500"
+                            required
+                        >
+                    </div>
+
+                    <div id="form-error" role="alert" hidden></div>
+
+                    <button id="submit-button" type="submit">
+                        <span id="button-text">Run inference</span>
+                        <span id="loading-icon" hidden>⏳</span>
+                    </button>
+                </form>
+            </div>
+
+            <div
+                id="batch-panel"
+                class="mode-panel"
+                role="tabpanel"
+                aria-labelledby="batch-tab"
+                hidden
+            >
+                <div class="batch-intro">
+                    <div>
+                        <h2>Batch Inference</h2>
+                        <p>
+                            Run multiple independent inference requests concurrently.
+                        </p>
+                    </div>
+                    <span class="batch-limit">Up to 5 requests</span>
+                </div>
+
+                <form id="batch-form" autocomplete="off">
+                    <div id="batch-requests"></div>
+
+                    <div class="batch-toolbar">
+                        <span id="batch-request-count">1 / 5 requests</span>
+
+                        <button
+                            id="batch-add-request"
+                            class="secondary-button"
+                            type="button"
+                        >
+                            + Add request
+                        </button>
+                    </div>
+
+                    <div id="batch-form-error" role="alert" hidden></div>
+
+                    <button id="batch-submit-button" type="submit">
+                        <span id="batch-button-text">Run batch</span>
+                        <span id="batch-loading-icon" hidden>⏳</span>
+                    </button>
+                </form>
+            </div>
         </section>
 
         <section id="result-section" hidden>
@@ -167,7 +234,119 @@
                 <dd id="response-request-id">-</dd>
             </dl>
         </section>
+
+        <section id="batch-result-section" hidden>
+            <div class="batch-result-heading">
+                <h2>Batch Result</h2>
+                <span id="batch-result-status" class="status-pill">Completed</span>
+            </div>
+
+            <div class="batch-summary" aria-label="Batch summary">
+                <div class="summary-card">
+                    <span>Total</span>
+                    <strong id="batch-result-total">-</strong>
+                </div>
+
+                <div class="summary-card success-summary">
+                    <span>Success</span>
+                    <strong id="batch-result-success">-</strong>
+                </div>
+
+                <div class="summary-card failure-summary">
+                    <span>Failures</span>
+                    <strong id="batch-result-failures">-</strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Elapsed</span>
+                    <strong id="batch-result-elapsed">-</strong>
+                </div>
+            </div>
+
+            <div id="batch-results-list" class="batch-results-list"></div>
+        </section>
     </main>
+
+    <template id="batch-request-template">
+        <article class="batch-request-card">
+            <div class="batch-request-header">
+                <h3>Request <span class="batch-request-number"></span></h3>
+
+                <button
+                    class="batch-remove-request"
+                    type="button"
+                    aria-label="Remove request"
+                >
+                    Remove
+                </button>
+            </div>
+
+            <div class="batch-request-fields">
+                <div>
+                    <label class="batch-provider-label">Provider</label>
+                    <select class="batch-provider" required>
+                        <option value="">Select a provider</option>
+                        <option value="groq">Groq</option>
+                        <option value="gemini">Gemini</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="batch-model-label">Model</label>
+                    <select class="batch-model" required disabled>
+                        <option value="">Select a provider first</option>
+                    </select>
+                </div>
+
+                <div class="full-width-field">
+                    <label class="batch-system-prompt-label">System prompt</label>
+                    <textarea
+                        class="batch-system-prompt"
+                        rows="3"
+                        maxlength="2000"
+                        spellcheck="false"
+                        placeholder="Optional instructions for the model"
+                    ></textarea>
+                </div>
+
+                <div class="full-width-field">
+                    <label class="batch-prompt-label">Prompt</label>
+                    <textarea
+                        class="batch-prompt"
+                        rows="5"
+                        maxlength="2000"
+                        spellcheck="false"
+                        placeholder="Enter your prompt"
+                        required
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label class="batch-temperature-label">Temperature</label>
+                    <input
+                        class="batch-temperature"
+                        type="text"
+                        inputmode="decimal"
+                        pattern="(?:0(?:\.[0-9])?|1(?:\.[0-9])?|2(?:\.0)?|\.[0-9])"
+                        value="0.7"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label class="batch-max-tokens-label">Max tokens</label>
+                    <input
+                        class="batch-max-tokens"
+                        type="text"
+                        inputmode="numeric"
+                        pattern="(?:[1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)"
+                        value="500"
+                        required
+                    >
+                </div>
+            </div>
+        </article>
+    </template>
 
     <script src="app.js"></script>
 </body>

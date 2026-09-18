@@ -40,3 +40,86 @@ class ModelResponse:
     completion_tokens: int
     latency_ms: float
     request_id: str
+
+
+@dataclass(frozen=True)
+class BatchItemResult:
+    """
+    Represent the isolated outcome of a single item execution within a batch.
+    Enforces strict consistency: success items cannot carry errors, and
+    failed items cannot carry a model response.
+    """
+
+    request_id: str
+    success: bool
+    response: ModelResponse | None
+    error_type: str | None
+    error_message: str | None
+
+    def __post_init__(self) -> None:
+        if self.success:
+            if self.response is None:
+                raise ValueError(
+                    "BatchItemResult marked as success=True requires a valid ModelResponse."
+                )
+
+            if self.error_type is not None or self.error_message is not None:
+                raise ValueError(
+                    "BatchItemResult marked as success=True cannot contain error details."
+                )
+        else:
+            if self.response is not None:
+                raise ValueError(
+                    "BatchItemResult marked as success=False cannot have a ModelResponse."
+                )
+
+            if not self.error_type or not self.error_type.strip():
+                raise ValueError(
+                    "BatchItemResult marked as success=False requires a non-empty error_type."
+                )
+
+            if not self.error_message or not self.error_message.strip():
+                raise ValueError(
+                    "BatchItemResult marked as success=False requires a non-empty error_message."
+                )
+
+
+@dataclass(frozen=True)
+class BatchInferenceResult:
+    """
+    Represent the consolidated outcome of an entire batch execution.
+    Uses tuples for immutability and validates metric consistency by construction.
+    """
+
+    results: tuple[BatchItemResult, ...]
+    total: int
+    success_count: int
+    failure_count: int
+    elapsed_ms: float
+
+    def __post_init__(self) -> None:
+        if self.total != len(self.results):
+            raise ValueError(
+                "Field 'total' does not match the actual length of the results tuple."
+            )
+
+        actual_success = sum(1 for r in self.results if r.success)
+        actual_failure = len(self.results) - actual_success
+
+        if self.success_count != actual_success:
+            raise ValueError(
+                "Field 'success_count' does not match actual successful items."
+            )
+
+        if self.failure_count != actual_failure:
+            raise ValueError(
+                "Field 'failure_count' does not match actual failed items."
+            )
+
+        if isinstance(self.elapsed_ms, bool) or not isinstance(
+            self.elapsed_ms, (int, float)
+        ):
+            raise TypeError("'elapsed_ms' must be an int or float.")
+
+        if self.elapsed_ms < 0:
+            raise ValueError("'elapsed_ms' cannot be negative.")

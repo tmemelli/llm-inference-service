@@ -8,13 +8,17 @@ from fastapi import APIRouter, Depends
 
 from llm_inference_service.api.dependencies import (
     enforce_inference_rate_limit,
+    get_batch_inference_service,
     get_inference_service,
 )
 from llm_inference_service.api.schemas import (
+    BatchInferenceRequestSchema,
+    BatchInferenceResponseSchema,
     InferenceRequestSchema,
     InferenceResponseSchema,
 )
 from llm_inference_service.domain.models import InferenceRequest
+from llm_inference_service.services.batch_inference_service import BatchInferenceService
 from llm_inference_service.services.inference_service import InferenceService
 
 api_router = APIRouter()
@@ -52,3 +56,27 @@ async def run_inference(
     domain_response = await service.execute(domain_request)
 
     return InferenceResponseSchema.model_validate(domain_response)
+
+
+@api_router.post(
+    "/v1/inference/batch",
+    dependencies=[Depends(enforce_inference_rate_limit)],
+)
+async def run_batch_inference(
+    request: BatchInferenceRequestSchema,
+    service: Annotated[
+        BatchInferenceService,
+        Depends(get_batch_inference_service),
+    ],
+) -> BatchInferenceResponseSchema:
+    """
+    Execute multiple inference requests concurrently.
+    """
+
+    domain_requests = [
+        InferenceRequest(**item.model_dump()) for item in request.requests
+    ]
+
+    domain_response = await service.execute(domain_requests)
+
+    return BatchInferenceResponseSchema.model_validate(domain_response)

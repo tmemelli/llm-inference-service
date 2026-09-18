@@ -15,6 +15,12 @@ class ProviderNotFoundError(GatewayError):
     """
 
 
+class BatchSizeExceededError(GatewayError):
+    """
+    Raised when the requested batch size exceeds the maximum allowed limit.
+    """
+
+
 class ProviderError(GatewayError):
     """
     Base exception for failures originating from an upstream AI provider.

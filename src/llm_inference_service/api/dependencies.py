@@ -7,6 +7,9 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 
 from llm_inference_service.api.rate_limiter import InMemoryRateLimiter
+from llm_inference_service.services.batch_inference_service import (
+    BatchInferenceService,
+)
 from llm_inference_service.services.inference_service import InferenceService
 
 
@@ -22,6 +25,16 @@ def get_inference_service(
     """
 
     return request.app.state.inference_service
+
+
+def get_batch_inference_service(
+    request: Request,
+) -> BatchInferenceService:
+    """
+    Return the application-scoped batch inference service.
+    """
+
+    return request.app.state.batch_inference_service
 
 
 def get_rate_limiter(request: Request) -> InMemoryRateLimiter:

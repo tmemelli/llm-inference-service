@@ -115,7 +115,7 @@ def _map_gemini_error(exc: Exception) -> ProviderError:
             provider="gemini",
             error_type=type(exc).__name__,
             message=(
-                "Failed to establish a connection with the upstream " "Gemini provider."
+                "Failed to establish a connection with the upstream Gemini provider."
             ),
         )
 

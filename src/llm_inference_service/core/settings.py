@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     cors_allowed_origins: list[str] = Field(default_factory=list)
     inference_rate_limit_per_minute: int = Field(default=5, ge=1)
     provider_policies: dict[str, ProviderPolicy]
+    batch_max_requests: int = Field(default=5, ge=1, le=50)
 
     @model_validator(mode="after")
     def validate_provider_policies(self) -> "Settings":

@@ -91,3 +91,30 @@ class InferenceResponseSchema(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     latency_ms: float
+
+
+class BatchInferenceRequestSchema(BaseModel):
+    requests: list[InferenceRequestSchema] = Field(
+        min_length=1,
+        max_length=50,
+    )
+
+
+class BatchItemResponseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    request_id: str
+    success: bool
+    response: InferenceResponseSchema | None
+    error_type: str | None
+    error_message: str | None
+
+
+class BatchInferenceResponseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    results: list[BatchItemResponseSchema]
+    total: int
+    success_count: int
+    failure_count: int
+    elapsed_ms: float
