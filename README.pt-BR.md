@@ -169,17 +169,17 @@ O projeto inclui um frontend público conectado ao serviço FastAPI em produçã
 
 | Inferência Single | Inferência Batch |
 |:---:|:---:|
-| ![Interface de inferência single](assets/single-inference-home.png) | ![Interface de inferência batch](assets/batch-inference-home.png) |
+| ![Interface de inferência single](docs/assets/single-inference-home.png) | ![Interface de inferência batch](docs/assets/batch-inference-home.png) |
 | *Interface para uma única requisição em `app.thiagomemelli.com.br`* | *Interface batch para até 5 requisições independentes* |
 
 | Resultado Single | Resultado Batch |
 |:---:|:---:|
-| ![Resultado de inferência single](assets/single-success.png) | ![Resultado de inferência batch](assets/batch-success.png) |
+| ![Resultado de inferência single](docs/assets/single-success.png) | ![Resultado de inferência batch](docs/assets/batch-success.png) |
 | *Resposta normalizada com provedor, modelo, uso de tokens, latência e request ID* | *Resultados por item mais métricas de total, sucessos, falhas e tempo decorrido* |
 
 ### Swagger / OpenAPI
 
-<img src="assets/swagger-api.png" alt="FastAPI Swagger mostrando os endpoints de inferência single e batch" width="900">
+<img src="docs/assets/swagger-api.png" alt="FastAPI Swagger mostrando os endpoints de inferência single e batch" width="900">
 
 *Documentação pública da API expondo `POST /v1/inference` e `POST /v1/inference/batch`.*
 
