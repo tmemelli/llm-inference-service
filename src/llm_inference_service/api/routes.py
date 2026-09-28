@@ -24,7 +24,11 @@ from llm_inference_service.services.inference_service import InferenceService
 api_router = APIRouter()
 
 
-@api_router.get("/health")
+@api_router.get(
+    "/health",
+    tags=["Health"],
+    summary="Check API health",
+)
 async def health_check() -> dict[str, str]:
     """
     Return the current health status of the API.
@@ -35,6 +39,8 @@ async def health_check() -> dict[str, str]:
 
 @api_router.post(
     "/v1/inference",
+    tags=["Inference"],
+    summary="Run a single LLM inference",
     dependencies=[Depends(enforce_inference_rate_limit)],
 )
 async def run_inference(
@@ -60,6 +66,8 @@ async def run_inference(
 
 @api_router.post(
     "/v1/inference/batch",
+    tags=["Inference"],
+    summary="Run concurrent batch LLM inference",
     dependencies=[Depends(enforce_inference_rate_limit)],
 )
 async def run_batch_inference(

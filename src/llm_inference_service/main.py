@@ -15,6 +15,13 @@ from llm_inference_service.core.settings import get_settings
 settings = get_settings()
 
 app = FastAPI(
+    title="LLM Inference Service",
+    description=(
+        "Resilient multi-provider LLM inference API with asynchronous execution, "
+        "concurrent batch processing, retries, model fallback, provider fallback, "
+        "rate limiting, and execution observability."
+    ),
+    version="0.1.0",
     lifespan=lifespan,
 )
 
