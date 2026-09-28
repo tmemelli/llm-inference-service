@@ -94,7 +94,6 @@ class BatchInferenceService:
         """
 
         try:
-
             result = await self._inference_service.execute(request)
 
             return BatchItemResult(

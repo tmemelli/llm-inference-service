@@ -67,5 +67,5 @@ async def test_inference_timeout_raises_provider_timeout_error() -> None:
     assert exc_info.value.provider == "groq"
     assert exc_info.value.error_type == "TimeoutError"
     assert exc_info.value.message == (
-        "The inference request exceeded the configured timeout " "of 0.01 seconds."
+        "The inference request exceeded the configured timeout of 0.01 seconds."
     )

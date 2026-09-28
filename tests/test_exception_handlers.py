@@ -27,7 +27,7 @@ def _create_test_app() -> FastAPI:
             provider="groq",
             error_type="APITimeoutError",
             message=(
-                "The upstream provider took too long to respond. " "Request timed out."
+                "The upstream provider took too long to respond. Request timed out."
             ),
         )
 
@@ -62,9 +62,7 @@ def test_provider_timeout_handler() -> None:
 
     assert response.status_code == 504
     assert response.json() == {
-        "detail": (
-            "The upstream provider took too long to respond. " "Request timed out."
-        )
+        "detail": ("The upstream provider took too long to respond. Request timed out.")
     }
 
     # Ensure internal provider details are not exposed.

@@ -29,9 +29,9 @@
 
 ### 🌐 Online
 
-[**Aplicação Online**](https://app.thiagomemelli.com.br) •
-[**Documentação da API**](https://api.thiagomemelli.com.br/docs) •
-[**Health Check**](https://api.thiagomemelli.com.br/health) •
+[**Aplicação Online**](https://projects.thiagomemelli.com.br/llm-inference) •
+[**Documentação da API**](https://llm-inference-service-g4os.onrender.com/docs) •
+[**Health Check**](https://llm-inference-service-g4os.onrender.com/health) •
 [**Portfólio**](https://thiagomemelli.com.br)
 
 <br>
@@ -163,31 +163,32 @@ Os detalhes dos SDKs dos provedores permanecem isolados atrás de adapters que i
 
 ## 🖼️ Demo Online
 
-O projeto inclui um frontend público conectado ao serviço FastAPI em produção, com interfaces separadas para inferência single e batch.
+A interface de produção é mantida no repositório separado
+[`projects-frontend`](https://github.com/tmemelli/projects-frontend) e se conecta a este serviço FastAPI.
 
 <div align="center">
 
 | Inferência Single | Inferência Batch |
 |:---:|:---:|
-| ![Interface de inferência single](docs/assets/single-inference-home.png) | ![Interface de inferência batch](docs/assets/batch-inference-home.png) |
-| *Interface para uma única requisição em `app.thiagomemelli.com.br`* | *Interface batch para até 5 requisições independentes* |
+| <img src="docs/assets/single-inference-home.png" alt="Interface de inferência single do LLM Inference Service" width="100%"> | <img src="docs/assets/batch-inference-home.png" alt="Interface de inferência batch do LLM Inference Service" width="100%"> |
+| *Interface para uma única requisição no frontend unificado* | *Interface batch para até 5 requisições independentes* |
 
 | Resultado Single | Resultado Batch |
 |:---:|:---:|
-| ![Resultado de inferência single](docs/assets/single-success.png) | ![Resultado de inferência batch](docs/assets/batch-success.png) |
+| <img src="docs/assets/single-success.png" alt="Resultado de inferência single do LLM Inference Service" width="100%"> | <img src="docs/assets/batch-success.png" alt="Resultado de inferência batch do LLM Inference Service" width="100%"> |
 | *Resposta normalizada com provedor, modelo, uso de tokens, latência e request ID* | *Resultados por item mais métricas de total, sucessos, falhas e tempo decorrido* |
 
 ### Swagger / OpenAPI
 
-<img src="docs/assets/swagger-api.png" alt="FastAPI Swagger mostrando os endpoints de inferência single e batch" width="900">
+<img src="docs/assets/swagger-api.png" alt="FastAPI Swagger mostrando health, inferência single e inferência batch" width="900">
 
-*Documentação pública da API expondo `POST /v1/inference` e `POST /v1/inference/batch`.*
+*Documentação pública da API expondo `GET /health`, `POST /v1/inference` e `POST /v1/inference/batch`.*
 
 </div>
 
 ### Provedor/modelo solicitado vs. executado
 
-O frontend mantém o provedor/modelo originalmente solicitado e os compara com o provedor/modelo retornado pela API.
+O frontend unificado mantém o provedor/modelo originalmente solicitado e os compara com o provedor/modelo retornado pela API.
 
 Isso torna o model fallback e o provider fallback observáveis em vez de ocultos:
 
@@ -487,18 +488,13 @@ Essa separação mantém concorrência, timeout, retry e fallback na camada de o
 ```text
 llm-inference-service/
 │
-├── assets/
-│   ├── app-home.png
-│   ├── batch-inference-home.png
-│   ├── batch-success.png
-│   ├── single-success.png
-│   └── swagger-api.png
-│
-├── frontend/
-│   ├── assets/
-│   ├── app.js
-│   ├── index.html
-│   └── styles.css
+├── docs/
+│   └── assets/
+│       ├── batch-inference-home.png
+│       ├── batch-success.png
+│       ├── single-inference-home.png
+│       ├── single-success.png
+│       └── swagger-api.png
 │
 ├── src/
 │   └── llm_inference_service/
@@ -555,6 +551,11 @@ llm-inference-service/
 └── README.pt-BR.md
 ```
 
+> **Arquitetura do frontend:** a interface de produção é mantida separadamente no
+> repositório [`projects-frontend`](https://github.com/tmemelli/projects-frontend).
+> Este repositório agora contém somente o backend do LLM Inference Service,
+> testes, configurações e documentação do projeto.
+
 ### Responsabilidades das camadas
 
 | Camada | Responsabilidade |
@@ -564,7 +565,6 @@ llm-inference-service/
 | `services` | Orquestração de inferência single, coordenação concorrente de batch, retry, fallback, timeout, uso de semáforos e resolução de provedores |
 | `core` | Settings, políticas de provedores, validação de startup e composição de dependências no lifespan |
 | `api` | Schemas HTTP, rotas, dependências, rate limiting público e mapeamento de exceções para HTTP |
-| `frontend` | Cliente estático público para demonstrar inferência single e batch |
 
 ---
 
@@ -740,7 +740,7 @@ Os clientes dos provedores são fechados durante o shutdown da aplicação.
 | Verificação de tipos | mypy | Validação estática de tipos |
 | Linting | Ruff | Qualidade de código |
 | Gerenciador de pacotes | uv | Dependências e gerenciamento de ambiente |
-| Frontend | HTML, CSS, JavaScript | Demonstração pública interativa |
+| Frontend | React + Vite | UI pública unificada mantida no repositório separado `projects-frontend` |
 
 ---
 
@@ -751,7 +751,7 @@ Os clientes dos provedores são fechados durante o shutdown da aplicação.
 Endpoint simples de verificação da saúde do serviço.
 
 ```bash
-curl https://api.thiagomemelli.com.br/health
+curl https://llm-inference-service-g4os.onrender.com/health
 ```
 
 Resposta:
@@ -770,7 +770,7 @@ Executa uma inferência pelo provedor/modelo solicitado e pela política de resi
 
 ```bash
 curl -X POST \
-  https://api.thiagomemelli.com.br/v1/inference \
+  https://llm-inference-service-g4os.onrender.com/v1/inference \
   -H 'Content-Type: application/json' \
   -d '{
     "provider": "groq",
@@ -786,7 +786,7 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  https://api.thiagomemelli.com.br/v1/inference \
+  https://llm-inference-service-g4os.onrender.com/v1/inference \
   -H 'Content-Type: application/json' \
   -d '{
     "provider": "gemini",
@@ -821,7 +821,7 @@ Executa múltiplas requisições independentes de inferência pelo mesmo pipelin
 
 ```bash
 curl -X POST \
-  https://api.thiagomemelli.com.br/v1/inference/batch \
+  https://llm-inference-service-g4os.onrender.com/v1/inference/batch \
   -H 'Content-Type: application/json' \
   -d '{
     "requests": [
@@ -966,20 +966,61 @@ Inferência single: http://127.0.0.1:8000/v1/inference
 Inferência batch:  http://127.0.0.1:8000/v1/inference/batch
 ```
 
-### 5. Opcional: sirva o frontend localmente
+### 5. Opcional: execute o frontend unificado localmente
 
-```bash
-cd frontend
-python -m http.server 5500
-```
+O frontend de produção é mantido no repositório separado
+[`projects-frontend`](https://github.com/tmemelli/projects-frontend).
 
-Abra:
+Mantenha a API do LLM Inference Service em execução local em:
 
 ```text
-http://localhost:5500
+http://127.0.0.1:8000
 ```
 
-O frontend usa automaticamente `http://127.0.0.1:8000` quando é servido a partir de `localhost`/`127.0.0.1`, e `https://api.thiagomemelli.com.br` em produção.
+Em outro terminal, clone e entre no repositório do frontend:
+
+```bash
+git clone https://github.com/tmemelli/projects-frontend.git
+cd projects-frontend
+```
+
+Instale as dependências do frontend:
+
+```bash
+npm install
+```
+
+Crie o arquivo de ambiente local:
+
+```bash
+cp .env.example .env
+```
+
+Configure a URL da API do LLM Inference Service no `.env`:
+
+```env
+VITE_LLM_INFERENCE_API_URL=http://127.0.0.1:8000
+```
+
+Inicie o servidor de desenvolvimento do Vite:
+
+```bash
+npm run dev
+```
+
+Abra a interface do LLM Inference em:
+
+```text
+http://localhost:5173/llm-inference
+```
+
+O frontend React local passará a enviar as requisições de inferência para o backend FastAPI local em `http://127.0.0.1:8000`.
+
+A aplicação em produção está disponível em:
+
+```text
+https://projects.thiagomemelli.com.br/llm-inference
+```
 
 ---
 
@@ -1231,7 +1272,7 @@ O deploy público mantém intencionalmente as credenciais dos provedores no back
 
 - chaves de API dos provedores são carregadas a partir de variáveis de ambiente;
 - as chaves usam `SecretStr` do Pydantic nos settings da aplicação;
-- o frontend não contém credenciais Groq ou Gemini;
+- o frontend unificado não contém credenciais Groq ou Gemini;
 - arquivos `.env` são excluídos pelo `.gitignore`;
 - origens CORS são configuradas explicitamente;
 - métodos CORS permitidos são restritos a `GET` e `POST`;
@@ -1249,44 +1290,45 @@ A extração do IP do cliente confia no primeiro valor de `X-Forwarded-For` quan
 
 ## 🚀 Deploy
 
-A aplicação é publicada em superfícies públicas separadas:
-
-```text
-Internet
-│
-├── thiagomemelli.com.br
-│   └── Portfólio profissional
-│
-├── app.thiagomemelli.com.br
-│   └── Cliente estático HTML/CSS/JavaScript
-│
-└── api.thiagomemelli.com.br
-    └── FastAPI
-        ├── GET  /health
-        ├── POST /v1/inference
-        ├── POST /v1/inference/batch
-        └── GET  /docs
-              │
-              ├── Groq
-              └── Gemini
-```
-
-O navegador chama apenas o endpoint público do FastAPI:
+O backend do LLM Inference Service e o frontend unificado de projetos são implantados como serviços independentes no Render.
 
 ```text
 Navegador
    │
-   ├── POST /v1/inference
-   └── POST /v1/inference/batch
-              │
-              ▼
-        Serviço FastAPI
+   ▼
+projects.thiagomemelli.com.br/llm-inference
+Frontend unificado React + Vite
+projects-frontend
    │
-   ├── chave Groq somente no servidor
-   └── chave Gemini somente no servidor
+   │ HTTPS / CORS
+   ▼
+llm-inference-service-g4os.onrender.com
+Backend FastAPI do LLM Inference Service
+   │
+   ├──► Groq
+   └──► Gemini
 ```
 
-Os secrets dos provedores nunca precisam ser enviados ao frontend.
+Comando de startup do backend:
+
+```bash
+uv run uvicorn llm_inference_service.main:app --host 0.0.0.0 --port $PORT
+```
+
+A configuração do backend em produção é fornecida por variáveis de ambiente.
+
+O frontend unificado está configurado para consumir:
+
+```text
+https://llm-inference-service-g4os.onrender.com
+```
+
+O frontend é mantido e implantado separadamente pelo repositório
+[`projects-frontend`](https://github.com/tmemelli/projects-frontend).
+
+As chaves de API dos provedores permanecem exclusivamente no backend e nunca são enviadas ao navegador.
+
+> **Nota da demo:** o backend público pode passar por cold start após períodos de inatividade, dependendo da instância Render utilizada no momento.
 
 ---
 
@@ -1297,7 +1339,7 @@ Este repositório concentra-se em inferência LLM confiável com resposta única
 O escopo atual inclui:
 
 - transporte público FastAPI;
-- frontend estático público;
+- integração com o frontend unificado React + Vite implantado separadamente;
 - integrações Groq e Gemini;
 - validação do catálogo provedor/modelo;
 - políticas específicas por provedor;
@@ -1358,7 +1400,7 @@ O rate limiter em memória é intencionalmente simples e local ao processo. Um d
 - [x] Metadados de tokens e latência
 - [x] Mapeamento de exceções no FastAPI
 - [x] Documentação pública Swagger/OpenAPI
-- [x] Frontend público
+- [x] Integração com o frontend público unificado via `projects-frontend`
 - [x] Deploy com domínio personalizado
 - [x] Suíte de testes automatizados
 - [x] Configuração do mypy
@@ -1374,7 +1416,7 @@ O rate limiter em memória é intencionalmente simples e local ao processo. Um d
 - [x] Métricas agregadas de total/sucesso/falha/tempo decorrido
 - [x] `BATCH_MAX_REQUESTS` configurável
 - [x] Validação HTTP e tratamento de erros específicos do batch
-- [x] Abas Single / Batch no frontend
+- [x] Abas Single / Batch no frontend unificado
 - [x] Visibilidade do prompt e system prompt por item nos resultados batch
 - [x] Testes de domínio e do endpoint HTTP batch
 

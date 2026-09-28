@@ -44,7 +44,7 @@ def _map_groq_error(exc: APIError) -> ProviderError:
             provider="groq",
             error_type=type(exc).__name__,
             message=(
-                "The upstream provider took too long to respond. " "Request timed out."
+                "The upstream provider took too long to respond. Request timed out."
             ),
         )
 
@@ -53,7 +53,7 @@ def _map_groq_error(exc: APIError) -> ProviderError:
             provider="groq",
             error_type=type(exc).__name__,
             message=(
-                "Failed to establish a connection with the upstream " "Groq provider."
+                "Failed to establish a connection with the upstream Groq provider."
             ),
         )
 
@@ -87,8 +87,7 @@ def _map_groq_error(exc: APIError) -> ProviderError:
             provider="groq",
             error_type=type(exc).__name__,
             message=(
-                "The upstream provider rate limit was exceeded. "
-                "Please try again later."
+                "The upstream provider rate limit was exceeded. Please try again later."
             ),
         )
 
