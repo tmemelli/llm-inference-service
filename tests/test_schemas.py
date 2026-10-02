@@ -76,5 +76,35 @@ def test_inference_request_rejects_system_prompt_above_max_length() -> None:
             provider="groq",
             model=SupportedModel.GPT_OSS_20B,
             prompt="Hello",
-            system_prompt="x" * 2001,
+            system_prompt="x" * 12001,
         )
+
+
+def test_inference_request_rejects_prompt_above_max_length() -> None:
+    with pytest.raises(ValidationError):
+        InferenceRequestSchema(
+            provider="groq",
+            model=SupportedModel.GPT_OSS_20B,
+            prompt="x" * 20001,
+        )
+
+
+def test_inference_request_rejects_max_tokens_above_maximum() -> None:
+    with pytest.raises(ValidationError):
+        InferenceRequestSchema(
+            provider="groq",
+            model=SupportedModel.GPT_OSS_20B,
+            prompt="Hello",
+            max_tokens=2001,
+        )
+
+
+def test_inference_request_accepts_max_tokens_at_maximum() -> None:
+    schema = InferenceRequestSchema(
+        provider="groq",
+        model=SupportedModel.GPT_OSS_20B,
+        prompt="Hello",
+        max_tokens=2000,
+    )
+
+    assert schema.max_tokens == 2000

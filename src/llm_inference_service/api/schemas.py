@@ -23,7 +23,7 @@ PromptString = Annotated[
     StringConstraints(
         strip_whitespace=True,
         min_length=1,
-        max_length=2000,
+        max_length=20000,
     ),
 ]
 
@@ -32,7 +32,7 @@ SystemPromptString = Annotated[
     StringConstraints(
         strip_whitespace=True,
         min_length=1,
-        max_length=2000,
+        max_length=12000,
     ),
 ]
 
@@ -47,7 +47,7 @@ class InferenceRequestSchema(BaseModel):
     prompt: PromptString
     system_prompt: SystemPromptString | None = None
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: int = Field(default=500, ge=1, le=500)
+    max_tokens: int = Field(default=500, ge=1, le=2000)
 
     @field_validator("provider", mode="before")
     @classmethod

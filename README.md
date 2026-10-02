@@ -383,10 +383,10 @@ Current request limits:
 | Field | Constraint |
 |---|---|
 | `provider` | `groq` or `gemini` |
-| `prompt` | 1–2000 characters |
-| `system_prompt` | optional, 1–2000 characters |
+| `prompt` | 1–20000 characters |
+| `system_prompt` | optional, 1–12000 characters |
 | `temperature` | `0.0`–`2.0` |
-| `max_tokens` | `1`–`500` |
+| `max_tokens` | `1`–`2000` |
 | batch `requests` | 1–50 at the API schema boundary |
 
 The configured runtime batch limit is validated separately through `BATCH_MAX_REQUESTS` and defaults to `5`.

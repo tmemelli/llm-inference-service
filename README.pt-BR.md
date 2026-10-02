@@ -380,10 +380,10 @@ Limites atuais das requisições:
 | Campo | Restrição |
 |---|---|
 | `provider` | `groq` ou `gemini` |
-| `prompt` | 1–2000 caracteres |
-| `system_prompt` | opcional, 1–2000 caracteres |
+| `prompt` | 1–20000 caracteres |
+| `system_prompt` | opcional, 1–12000 caracteres |
 | `temperature` | `0.0`–`2.0` |
-| `max_tokens` | `1`–`500` |
+| `max_tokens` | `1`–`2000` |
 | `requests` do batch | 1–50 no limite do schema da API |
 
 O limite configurado de runtime do batch é validado separadamente por `BATCH_MAX_REQUESTS` e tem valor padrão `5`.
