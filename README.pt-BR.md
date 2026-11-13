@@ -1312,7 +1312,7 @@ Backend FastAPI do LLM Inference Service
 Comando de startup do backend:
 
 ```bash
-uv run uvicorn llm_inference_service.main:app --host 0.0.0.0 --port $PORT
+uv run --no-sync uvicorn llm_inference_service.main:app --host 0.0.0.0 --port $PORT
 ```
 
 A configuração do backend em produção é fornecida por variáveis de ambiente.

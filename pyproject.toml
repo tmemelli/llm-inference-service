@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.141.1",
+    "fastapi>=0.162.5,<0.163.0",
     "google-genai>=2.22.0",
     "groq>=1.7.0",
     "pydantic>=2.13.5",
@@ -26,6 +26,7 @@ dev = [
     "anyio>=4.15.1",
     "debugpy>=1.8.21",
     "httpx>=0.28.1",
+    "httpx2>=2.16.0",
     "mypy>=2.3.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",

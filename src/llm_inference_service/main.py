@@ -2,7 +2,7 @@
 Application entry point for the LLM Inference Service API.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from llm_inference_service.api.exception_handlers import (
@@ -32,6 +32,22 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> dict[str, str]:
+    """Return basic service information."""
+    return {
+        "service": "llm-inference-service",
+        "status": "ok",
+    }
+
+
+@app.head("/", include_in_schema=False)
+async def root_head() -> Response:
+    """Respond to infrastructure probes against the application root."""
+    return Response(status_code=204)
+
 
 app.include_router(api_router)
 register_exception_handlers(app)
